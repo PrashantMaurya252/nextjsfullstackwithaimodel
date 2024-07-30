@@ -8,6 +8,15 @@ const UsernameQuerySchema = z.object({
 })
 
 export async function GET(request:Request){
+  
+    // Not allowed in latest nextjs
+
+    // if(request.method !== 'GET'){
+    //     return Response.json({
+    //         success:false,
+    //         message:"Method Not Allowed"
+    //     },{status:405})
+    // }
     await dbConnect()
 
     try {
@@ -25,6 +34,25 @@ export async function GET(request:Request){
                 message:usernameErrors?.length > 0 ? usernameErrors.join(', '):"Invalid Query Parameters"
             },{status:400})
         }
+
+        const {username} = result.data
+        const existingVerifiedUser = await UserModel.findOne({username,isVerified:true})
+        if(existingVerifiedUser){
+            return Response.json(
+                {
+                    success:false,
+                    message:"Username already taken"
+                },
+                {status:400}
+            )
+        }
+        return Response.json(
+            {
+                success:true,
+                message:"Username is a unique"
+            },
+            {status:200}
+        )
     } catch (error) {
         console.log("Error checking username",error)
         return Response.json(
