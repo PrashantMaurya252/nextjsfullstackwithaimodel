@@ -4,13 +4,13 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z  from "zod"
 import Link from "next/link"
-import { useDebounceValue } from 'usehooks-ts'
+import { useDebounceCallback } from 'usehooks-ts'
 import { useToast } from '@/components/ui/use-toast'
 import { useRouter } from 'next/navigation'
 import { signUpSchema } from '@/schemas/signupSchema'
 import axios, { AxiosError } from 'axios'
 import { ApiResponse } from '@/types/ApiResponse'
-import { Form, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -22,7 +22,7 @@ const SignUp = () => {
   const [usernameMessage,setUsernameMessage] = useState('')
   const [isCheckingUsername,setIsCheckingUsername] = useState(false)
   const [isSubmitting,setIsSubmitting] = useState(false)
-  const debouncedUsername = useDebounceValue(username,300)
+  const debounced = useDebounceCallback(setUsername,300)
   const {toast} = useToast()
   const router = useRouter()
 
@@ -38,11 +38,13 @@ const SignUp = () => {
 
   useEffect(()=>{
     const checkUsernameUnique = async() =>{
-      if(debouncedUsername){
+      if(username){
         setIsCheckingUsername(true)
         setUsernameMessage('')
         try {
-          const response = await axios.get(`/api/check-username-uniqueness?username=${debouncedUsername}`)
+          const response = await axios.get(`/api/check-username-uniqueness?username=${username}`)
+          // let message = response.data.message
+          // setUsername(message)
           setUsernameMessage(response.data.message)
         } catch (error) {
           const axiosError = error as AxiosError<ApiResponse>
@@ -55,7 +57,7 @@ const SignUp = () => {
       }
     }
     checkUsernameUnique()
-  },[debouncedUsername])
+  },[username])
 
   const onSubmit = async(data:z.infer<typeof signUpSchema>)=>{
     setIsSubmitting(true)
@@ -97,25 +99,29 @@ const SignUp = () => {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Username</FormLabel>
+                <FormControl>
                 <Input
+                placeholder='username'
                   {...field}
                   onChange={(e) => {
                     field.onChange(e);
-                    setUsername(e.target.value);
+                    debounced(e.target.value);
                   }}
                 />
+                </FormControl>
+               
                 {isCheckingUsername && <Loader2 className="animate-spin" />}
-                {!isCheckingUsername && usernameMessage && (
+                {/* {!isCheckingUsername && usernameMessage && ( */}
                   <p
                     className={`text-sm ${
-                      usernameMessage === 'Username is unique'
+                      usernameMessage === 'Username is  unique'
                         ? 'text-green-500'
                         : 'text-red-500'
                     }`}
                   >
                     {usernameMessage}
                   </p>
-                )}
+                {/* )} */}
                 <FormMessage />
               </FormItem>
             )}
