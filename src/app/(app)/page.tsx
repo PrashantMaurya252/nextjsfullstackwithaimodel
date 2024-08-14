@@ -55,10 +55,27 @@ export default function Home() {
     setIsSwitchLoading(false)
     try {
       const response = await axios.get<ApiResponse>('/api/getMessages')
+      setMessages(response.data.messages || [])
+      if(refresh){
+        toast({
+          title:"Refreshed Messages",
+          description:"Showing latest messages",
+          
+        })
+      }
     } catch (error) {
-      
+      const axiosError = error as AxiosError<ApiResponse>
+      toast({
+        title:"Error",
+        description:axiosError.response?.data.message || "Failed to fetch message settings",
+        variant:"destructive"
+      })
     }
-  },[])
+    finally{
+      setIsLoading(true)
+      setIsSwitchLoading(false)
+    }
+  },[setIsLoading,setMessages])
   return (
     <div>Dashboard</div>
   );
